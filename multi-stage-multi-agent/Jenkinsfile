@@ -1,21 +1,73 @@
 pipeline {
-  agent none
-  stages {
-    stage('Back-end') {
-      agent {
-        docker { image 'maven:3.8.1-adoptopenjdk-11' }
-      }
-      steps {
-        sh 'mvn --version'
-      }
+    agent none
+    stages {
+        stage('Back-end') {
+            agent {
+                docker { image 'maven:3.8.1-adoptopenjdk-11' }
+            }
+            steps {
+                script {
+                    // Create a simple Java project structure
+                    sh '''
+                    mkdir -p src/main/java/com/example
+                    echo "package com.example;
+                    
+                    public class HelloWorld {
+                        public static void main(String[] args) {
+                            System.out.println("Hello, World!");
+                        }
+                    }" > src/main/java/com/example/HelloWorld.java
+                    
+                    echo "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"
+                           xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+                           xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/POM/4.0.0/maven-4.0.0.xsd\">
+                    
+                        <modelVersion>4.0.0</modelVersion>
+                    
+                        <groupId>com.example</groupId>
+                        <artifactId>hello-world</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <build>
+                            <plugins>
+                                <plugin>
+                                    <groupId>org.apache.maven.plugins</groupId>
+                                    <artifactId>maven-compiler-plugin</artifactId>
+                                    <version>3.8.1</version>
+                                    <configuration>
+                                        <source>11</source>
+                                        <target>11</target>
+                                    </configuration>
+                                </plugin>
+                            </plugins>
+                        </build>
+                    </project>" > pom.xml
+                    
+                    mvn clean compile
+                    mvn exec:java -Dexec.mainClass="com.example.HelloWorld"
+                    '''
+                }
+            }
+        }
+        stage('Front-end') {
+            agent {
+                docker { image 'node:16-alpine' }
+            }
+            steps {
+                script {
+                    // Create a simple Node.js project structure
+                    sh '''
+                    mkdir -p app
+                    cd app
+                    echo "console.log('Hello, World!');" > index.js
+                    
+                    # Initialize a new Node.js project and install dependencies
+                    npm init -y
+                    echo "node_modules" > .gitignore
+                    
+                    node index.js
+                    '''
+                }
+            }
+        }
     }
-    stage('Front-end') {
-      agent {
-        docker { image 'node:16-alpine' }
-      }
-      steps {
-        sh 'node --version'
-      }
-    }
-  }
 }
