@@ -1,12 +1,46 @@
 pipeline {
-  agent {
-    docker { image 'node:16-alpine' }
-  }
-  stages {
-    stage('Test') {
-      steps {
-        sh 'node --version'
-      }
+    agent none  // We will define agent per stage
+    
+    stages {
+        stage('Build') {
+            agent {
+                docker {
+                    image 'maven:3.8.4-jdk-11'  // Maven container for the build stage
+                    args '-v /root/.m2:/root/.m2'  // Mount the maven repository
+                }
+            }
+            steps {
+                sh 'mvn clean install'  // Maven build command
+            }
+        }
+
+        stage('Test') {
+            agent {
+                docker {
+                    image 'python:3.9'  // Python container for testing
+                }
+            }
+            steps {
+                sh 'pytest'  // Run Python tests using pytest
+            }
+        }
+
+        stage('Deploy') {
+            agent {
+                docker {
+                    image 'alpine:latest'  // Lightweight Alpine container for deployment
+                }
+            }
+            steps {
+                sh 'echo "Deploying application..."'
+                // Add your deployment commands here
+            }
+        }
     }
-  }
+    
+    post {
+        always {
+            echo 'Pipeline completed.'
+        }
+    }
 }
