@@ -1,51 +1,12 @@
 pipeline {
-    agent none  // Define agent per stage
-    
-    stages {
-        stage('Build') {
-            agent {
-                label 'docker'  // Ensure Jenkins has access to Docker
-            }
-            steps {
-                script {
-                    docker.image('maven:3.8.4-jdk-11').inside('-v /root/.m2:/root/.m2') {
-                        sh 'mvn clean install'  // Maven build command
-                    }
-                }
-            }
-        }
-
-        stage('Test') {
-            agent {
-                label 'docker'  // Ensure Jenkins has access to Docker
-            }
-            steps {
-                script {
-                    docker.image('python:3.9').inside {
-                        sh 'pytest'  // Run Python tests
-                    }
-                }
-            }
-        }
-
-        stage('Deploy') {
-            agent {
-                label 'docker'  // Ensure Jenkins has access to Docker
-            }
-            steps {
-                script {
-                    docker.image('alpine:latest').inside {
-                        sh 'echo "Deploying application..."'
-                        // Add your deployment commands here
-                    }
-                }
-            }
-        }
+  agent {
+    docker { image 'node:16-alpine' }
+  }
+  stages {
+    stage('Test') {
+      steps {
+        sh 'node --version'
+      }
     }
-    
-    post {
-        always {
-            echo 'Pipeline completed.'
-        }
-    }
+  }
 }
