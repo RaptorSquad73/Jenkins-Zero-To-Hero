@@ -1,39 +1,44 @@
 pipeline {
-    agent none  // We will define agent per stage
+    agent none  // Define agent per stage
     
     stages {
         stage('Build') {
             agent {
-                docker {
-                    image 'maven:3.8.4-jdk-11'  // Maven container for the build stage
-                    args '-v /root/.m2:/root/.m2'  // Mount the maven repository
-                }
+                label 'docker'  // Ensure Jenkins has access to Docker
             }
             steps {
-                sh 'mvn clean install'  // Maven build command
+                script {
+                    docker.image('maven:3.8.4-jdk-11').inside('-v /root/.m2:/root/.m2') {
+                        sh 'mvn clean install'  // Maven build command
+                    }
+                }
             }
         }
 
         stage('Test') {
             agent {
-                docker {
-                    image 'python:3.9'  // Python container for testing
-                }
+                label 'docker'  // Ensure Jenkins has access to Docker
             }
             steps {
-                sh 'pytest'  // Run Python tests using pytest
+                script {
+                    docker.image('python:3.9').inside {
+                        sh 'pytest'  // Run Python tests
+                    }
+                }
             }
         }
 
         stage('Deploy') {
             agent {
-                docker {
-                    image 'alpine:latest'  // Lightweight Alpine container for deployment
-                }
+                label 'docker'  // Ensure Jenkins has access to Docker
             }
             steps {
-                sh 'echo "Deploying application..."'
-                // Add your deployment commands here
+                script {
+                    docker.image('alpine:latest').inside {
+                        sh 'echo "Deploying application..."'
+                        // Add your deployment commands here
+                    }
+                }
             }
         }
     }
